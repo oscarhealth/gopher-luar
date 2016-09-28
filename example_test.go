@@ -174,7 +174,7 @@ func ExampleStructConstructorAndMap() {
 		panic(err)
 	}
 
-	everyone := L.GetGlobal("everyone").(*lua.LUserData).Value.(map[string]*Person)
+	everyone := L.GetGlobal("everyone").(*lua.LUserData).Value.(*reflectedInterface).Interface.(map[string]*Person)
 	fmt.Println(len(everyone))
 
 	// Output:
@@ -755,7 +755,7 @@ func ExampleComplex() {
 	if err := L.DoString(code); err != nil {
 		panic(err)
 	}
-	b := L.GetGlobal("b").(*lua.LUserData).Value.(complex128)
+	b := L.GetGlobal("b").(*lua.LUserData).Value.(*reflectedInterface).Interface.(complex128)
 	fmt.Println(a == b)
 
 	// Output:
@@ -1492,7 +1492,7 @@ func TestImmutableStructPtrFunc(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected error, none thrown")
 	}
-	if !strings.Contains(err.Error(), "attempt to call a non-function object") {
+	if !strings.Contains(err.Error(), "cannot call pointer methods on immutable objects") {
 		t.Fatal("Expected call error, got:", err)
 	}
 }
@@ -2179,4 +2179,40 @@ func TestImmutableTransparentPtrFieldAssignment(t *testing.T) {
 	if !strings.Contains(err.Error(), "invalid operation on immutable struct") {
 		t.Fatal("Expected invalid operation error, got:", err)
 	}
+}
+
+func ExampleMultipleReflectedStructsDifferentOptions() {
+	// Set up two structs with different ReflectOptions -
+	// should retain their own behaviors
+	const code = `
+	-- A's pointers are not transparent
+	print(-a.Str)
+	-- B has transparent pointers, and is mutable
+	print(b.Str)
+	b.Str = "world"
+	print(b.Str)
+	-- Assigning to B with transparent pointers shouldn't affect
+	-- other pointers that originally pointed to the same string
+	print(-a.Str)
+	`
+
+	L := lua.NewState()
+	defer L.Close()
+
+	val := "hello"
+	a := TransparentPtrAccessB{Str: &val}
+	b := TransparentPtrAccessB{Str: &val}
+
+	L.SetGlobal("a", New(L, &a, ReflectOptions{Immutable: true}))
+	L.SetGlobal("b", New(L, &b, ReflectOptions{TransparentPointers: true}))
+
+	if err := L.DoString(code); err != nil {
+		panic(err)
+	}
+
+	// Output:
+	// hello
+	// hello
+	// world
+	// hello
 }
