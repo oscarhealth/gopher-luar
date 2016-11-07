@@ -233,7 +233,7 @@ func lValueToReflect(L *lua.LState, v lua.LValue, hint reflect.Type, tryConvertP
 			return s
 
 		case hint.Kind() == reflect.Map:
-			keyType := hint.Elem()
+			keyType := hint.Key()
 			elemType := hint.Elem()
 			s := reflect.MakeMap(hint)
 
