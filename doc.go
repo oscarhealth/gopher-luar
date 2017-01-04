@@ -177,6 +177,44 @@
 // Pointers to struct and array values are returned when accessed via a struct
 // field, array index, or slice index.
 //
+// Transparent Pointers
+//
+// You can instruct luar to transparently dereference pointers as if they are
+// regular values, by passing ReflectOptions to New:
+//
+// Example:
+//  type Person struct {
+//    Name *string
+//  }
+//  name := "Tim"
+//  tim := &Person{&name}
+//  L.SetGlobal("tim", New(L, tim, ReflectOptions{TransparentPointers: true}))
+//  ---
+//  print(tim.Name) -- prints "Tim"; note that no dereference via - is req'd
+//  tim.Name = "Timothy" -- assignment works transparently too
+//
+// Note that this also takes care of populating zero values when pointers are
+// first accessed. This is to mimic the behavior of zero values on non-pointer
+// fields. Objects behave as if all fields are regular values.
+//
+// Example:
+//  type Parent struct {
+//    Person
+//    Child *Person
+//  }
+//  // No initialization of Name:
+//  tim := &Parent{}
+//  ---
+//  -- prints an empty string; does not raise an error, even though Child and
+//  -- Name are both nil when accessed
+//  print(tim.Child.Name)
+//  -- afterwards, tim.Child will be set to a Person object, with a pointer to
+//  -- an empty string in Name
+//
+// This behavior is inherited by objects that are accessed through the
+// original reflected item. For example, functions reflected with
+// TransparentPointers will return objects that transparently dereference.
+//
 // Type methods
 //
 // Any array, channel, map, slice, or struct type that has methods defined on
@@ -249,6 +287,27 @@
 //  p = Person()
 //  p.Name = "John"
 //  print("Hello, " .. p.Name)  // prints "Hello, John"
+//
+// Immutability
+//
+// luar supports making a number of reflected object types immutable. This
+// means that e.g. a struct's fields cannot be modified, or a map cannot be
+// assigned new values. Attempting such a modification results in an error.
+// Types are still fully readable/writeable in Go, this only affects Lua
+// access. It's useful for locking down inputs that you want to be read-only
+// from Lua.
+//
+// Example:
+//  type Person struct {
+//    Name string
+//  }
+//  tim := &Person{"Tim"}
+//  L.SetGlobal("tim", New(L, tim, ReflectOptions{Immutable: true})
+//  ---
+//  tim.Name = "Bob" -- raises an error!
+//
+// Calling a pointer method on a struct is invalid when using immutability,
+// since pointer methods can modify the struct's internal state.
 //
 // Thread safety
 //
