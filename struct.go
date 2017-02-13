@@ -44,7 +44,9 @@ func structIndex(L *lua.LState) int {
 				if !field.CanSet() {
 					L.RaiseError("cannot transparently create pointer field " + key)
 				}
-				field.Set(reflect.New(field.Type().Elem()))
+				if opts.AutoPopulate {
+					field.Set(reflect.New(field.Type().Elem()))
+				}
 			}
 
 			// Return the value of the pointer
@@ -59,7 +61,9 @@ func structIndex(L *lua.LState) int {
 				if !field.CanSet() {
 					L.RaiseError("cannot transparently create slice " + key)
 				}
-				field.Set(reflect.MakeSlice(field.Type(), 0, 10))
+				if opts.AutoPopulate {
+					field.Set(reflect.MakeSlice(field.Type(), 0, 10))
+				}
 			}
 		}
 	}

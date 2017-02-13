@@ -97,12 +97,14 @@ type ReflectOptions struct {
 	// the immutable property, even when assigned to new variables. Immutable
 	// channels may send/receive, but cannot be closed from Lua.
 	Immutable bool
-	// For structs, will auto-populate and auto-indirect pointer fields. This
-	// makes structs with pointer fields behave like their non-pointer counterparts.
-	// Fields are populated with a zero-value object upon first access, and can
+	// For structs, will auto-indirect pointer fields. This makes structs with
+	// pointer fields behave like their non-pointer counterparts.  Fields can
 	// have values assigned directly without use of the pow (^) operator. Note
 	// that fields can only be set if the struct is reflected by reference.
 	TransparentPointers bool
+	// For structs, will auto-populate pointer fields with their appropriate Go
+	// type. This is only applicalble if TransparentPointers is on.
+	AutoPopulate bool
 }
 
 // Default options if no ReflectOptions struct is passed into luar.New().
@@ -110,6 +112,7 @@ func defaultReflectOptions() ReflectOptions {
 	return ReflectOptions{
 		Immutable:           false,
 		TransparentPointers: false,
+		AutoPopulate:        false,
 	}
 }
 

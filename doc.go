@@ -193,9 +193,10 @@
 //  print(tim.Name) -- prints "Tim"; note that no dereference via - is req'd
 //  tim.Name = "Timothy" -- assignment works transparently too
 //
-// Note that this also takes care of populating zero values when pointers are
-// first accessed. This is to mimic the behavior of zero values on non-pointer
-// fields. Objects behave as if all fields are regular values.
+// Additionally, automatic population can be enabled; this takes care of
+// populating zero values when pointers are first accessed. This is to mimic
+// the behavior of zero values on non-pointer fields. Objects behave as if all
+// fields are regular values.
 //
 // Example:
 //  type Parent struct {
@@ -204,6 +205,8 @@
 //  }
 //  // No initialization of Name:
 //  tim := &Parent{}
+//  L.SetGlobal("tim", New(L, tim, ReflectOptions{
+//     TransparentPointers: true, AutoPopulate: true}))
 //  ---
 //  -- prints an empty string; does not raise an error, even though Child and
 //  -- Name are both nil when accessed
@@ -211,7 +214,7 @@
 //  -- afterwards, tim.Child will be set to a Person object, with a pointer to
 //  -- an empty string in Name
 //
-// This behavior is inherited by objects that are accessed through the
+// Any behavior is inherited by objects that are accessed through the
 // original reflected item. For example, functions reflected with
 // TransparentPointers will return objects that transparently dereference.
 //

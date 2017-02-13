@@ -2051,7 +2051,7 @@ func TestTransparentValueAccess(t *testing.T) {
 	}
 }
 
-func ExampleTransparentNestedStructPtrAccess() {
+func ExampleAutoPopulateNestedStructs() {
 	// Access an undefined nested pointer field - should auto populate
 	// with zero values as if a non-pointer object
 	const code = `
@@ -2063,17 +2063,19 @@ func ExampleTransparentNestedStructPtrAccess() {
 
 	a := TransparentPtrAccessA{}
 
-	L.SetGlobal("a", New(L, &a, ReflectOptions{TransparentPointers: true}))
+	L.SetGlobal("a", New(L, &a, ReflectOptions{
+		TransparentPointers: true, AutoPopulate: true}))
 
 	if err := L.DoString(code); err != nil {
 		panic(err)
 	}
+	fmt.Println(*a.B.Str)
 
 	// Output:
 	//
 }
 
-func ExampleTransparentNestedStructPtrAssignment() {
+func ExampleNestedStructAccess() {
 	// Set an undefined nested pointer field - should get assigned like
 	// a regular non-pointer field
 	const code = `
@@ -2086,7 +2088,8 @@ func ExampleTransparentNestedStructPtrAssignment() {
 
 	a := TransparentPtrAccessA{}
 
-	L.SetGlobal("a", New(L, &a, ReflectOptions{TransparentPointers: true}))
+	L.SetGlobal("a", New(L, &a, ReflectOptions{
+		TransparentPointers: true, AutoPopulate: true}))
 
 	if err := L.DoString(code); err != nil {
 		panic(err)
@@ -2147,7 +2150,7 @@ type TransparentStructSliceFieldA struct {
 	List []string
 }
 
-func ExampleTransparentStructSliceField() {
+func ExampleAutoPopulateStructSliceField() {
 	// Access an undefined slice field - should be automatically created
 	const code = `
 	print(#a.List)
@@ -2158,7 +2161,8 @@ func ExampleTransparentStructSliceField() {
 
 	a := TransparentStructSliceFieldA{}
 
-	L.SetGlobal("a", New(L, &a, ReflectOptions{TransparentPointers: true}))
+	L.SetGlobal("a", New(L, &a, ReflectOptions{
+		TransparentPointers: true, AutoPopulate: true}))
 
 	if err := L.DoString(code); err != nil {
 		panic(err)
@@ -2168,7 +2172,7 @@ func ExampleTransparentStructSliceField() {
 	// 0
 }
 
-func ExampleTransparentStructSliceAppend() {
+func ExampleAutoPopulateStructSliceAppend() {
 	// Append to an undefined slice field - should be fine
 	const code = `
 	a.List = a.List:append("hi")
@@ -2180,7 +2184,8 @@ func ExampleTransparentStructSliceAppend() {
 
 	a := TransparentStructSliceFieldA{}
 
-	L.SetGlobal("a", New(L, &a, ReflectOptions{TransparentPointers: true}))
+	L.SetGlobal("a", New(L, &a, ReflectOptions{
+		TransparentPointers: true, AutoPopulate: true}))
 
 	if err := L.DoString(code); err != nil {
 		panic(err)
@@ -2289,6 +2294,37 @@ func TestImmutableTransparentPtrFieldAssignment(t *testing.T) {
 	if !strings.Contains(err.Error(), "invalid operation on immutable struct") {
 		t.Fatal("Expected invalid operation error, got:", err)
 	}
+}
+
+func TestNonAutoPopulateRead(t *testing.T) {
+	// Attempt to read from nil on an immutable struct with transparent
+	// pointers.  This should still return nil, since we should not modify the
+	// immutable struct.
+	const code = `
+	if x.Ptr ~= nil then
+		error("pointer should be nil")
+	end
+	if x.List ~= nil then
+		error("slice should be nil")
+	end
+	`
+	L := lua.NewState()
+	defer L.Close()
+
+	x := struct {
+		Ptr  *int
+		List []int
+	}{}
+	L.SetGlobal("x", New(L, &x, ReflectOptions{TransparentPointers: true}))
+
+	err := L.DoString(code)
+	if err != nil {
+		t.Error(err)
+	}
+	if x.Ptr != nil || x.List != nil {
+		t.Error("Immutable struct was edited", x)
+	}
+
 }
 
 func ExampleMultipleReflectedStructsDifferentOptions() {
