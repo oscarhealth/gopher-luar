@@ -9,9 +9,10 @@ the following are supported:
 
 * **Immutability**: Various types can be reflected as immutable, preventing any modification in Lua. This includes
 modification of struct fields, slices, maps, pointers, etc. A channel is prevented from being closed.
-* **Transparent pointers**: Objects can be reflected as if all pointer fields were plain value fields - automatically
-populating zero values as fields are accessed, and removing the need for the `^` and `-` operators that gopher-luar
-typically requires for manipulating pointers.
+* **Transparent pointers**: Objects can be reflected as if all pointer fields were plain value fields - removing
+  the need for the `^` and `-` operators that gopher-luar typically requires for manipulating pointers.
+* **Automatic population** On top of transparent pointers, objects can optionally have fields auto-created as they
+  are read from or written to. This removes the need to create those go types in lua, which can be messy.
 
 See the documentation for usage.
 
