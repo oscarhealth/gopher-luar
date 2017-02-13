@@ -95,7 +95,7 @@ type ReflectOptions struct {
 	// Only works for a subset of types that utilize a custom metatable - arrays,
 	// channels, maps, pointers, slices and structs. Child elements/fields inherit
 	// the immutable property, even when assigned to new variables. Immutable
-	// channels may send/receive, but cannot be closed from Lua/
+	// channels may send/receive, but cannot be closed from Lua.
 	Immutable bool
 	// For structs, will auto-indirect pointer fields. This makes structs with
 	// pointer fields behave like their non-pointer counterparts.  Fields can
