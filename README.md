@@ -12,7 +12,7 @@ modification of struct fields, slices, maps, pointers, etc. A channel is prevent
 * **Transparent pointers**: Objects can be reflected as if all pointer fields were plain value fields - removing
   the need for the `^` and `-` operators that gopher-luar typically requires for manipulating pointers.
 * **Automatic population** On top of transparent pointers, objects can optionally have nil fields automatically
-  created on read or write. This allows the lua code to act as if there were no pointers in the way, and they just
+  created on read. This allows the lua code to act as if there were no pointers in the way, and they just
   had the zero values.
 
 See the documentation for usage.
