@@ -2291,6 +2291,37 @@ func TestImmutableTransparentPtrFieldAssignment(t *testing.T) {
 	}
 }
 
+func TestImmutableTransparentRead(t *testing.T) {
+	// Attempt to read from nil on an immutable struct with transparent
+	// pointers.  This should still return nil, since we should not modify the
+	// immutable struct.
+	const code = `
+	if x.Ptr ~= nil then
+		error("pointer should be nil")
+	end
+	if x.List ~= nil then
+		error("slice should be nil")
+	end
+	`
+	L := lua.NewState()
+	defer L.Close()
+
+	x := struct {
+		Ptr  *int
+		List []int
+	}{}
+	L.SetGlobal("x", New(L, &x, ReflectOptions{Immutable: true, TransparentPointers: true}))
+
+	err := L.DoString(code)
+	if err != nil {
+		t.Error(err)
+	}
+	if x.Ptr != nil || x.List != nil {
+		t.Error("Immutable struct was edited", x)
+	}
+
+}
+
 func ExampleMultipleReflectedStructsDifferentOptions() {
 	// Set up two structs with different ReflectOptions -
 	// should retain their own behaviors
