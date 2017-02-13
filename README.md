@@ -11,8 +11,9 @@ the following are supported:
 modification of struct fields, slices, maps, pointers, etc. A channel is prevented from being closed.
 * **Transparent pointers**: Objects can be reflected as if all pointer fields were plain value fields - removing
   the need for the `^` and `-` operators that gopher-luar typically requires for manipulating pointers.
-* **Automatic population** On top of transparent pointers, objects can optionally have fields auto-created as they
-  are read from or written to. This removes the need to create those go types in lua, which can be messy.
+* **Automatic population** On top of transparent pointers, objects can optionally have nil fields automatically
+  created on read or write. This allows the lua code to act as if there were no pointers in the way, and they just
+  had the zero values.
 
 See the documentation for usage.
 
