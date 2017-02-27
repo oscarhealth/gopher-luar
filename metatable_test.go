@@ -22,7 +22,7 @@ type TestMetatable struct {
 }
 
 func Test_metatable(t *testing.T) {
-	L := lua.NewState(lua.Options{IncludeGoStackTrace: true})
+	L := lua.NewState()
 	defer L.Close()
 
 	b := &TestMetatable{
