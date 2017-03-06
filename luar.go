@@ -83,6 +83,21 @@ func New(L *lua.LState, value interface{}, opts ...ReflectOptions) lua.LValue {
 	}
 }
 
+// ToReflect converts the lua.LValue to a reflect.Value.
+//
+// Whenever possible, this will be a strongly-typed Go object matching an object that
+// was passed to luar.New. A type hint must be specified to indicate the type that the
+// variable is expected to be. This will be used to e.g. downcast an LString to a
+// string if that is what is expected. A regular LTable will be converted to a map,
+// slice, struct, etc (as per the hint) if possible.
+func ToReflect(L *lua.LState, value lua.LValue, hint reflect.Type) (reflect.Value, bool) {
+	reflectVal := lValueToReflect(L, value, hint, nil)
+	if !reflectVal.IsValid() {
+		return reflect.Value{}, false
+	}
+	return reflectVal, true
+}
+
 // ReflectOptions is a configuration that can be used to alter the behavior of a
 // reflected gopher-luar object.
 type ReflectOptions struct {
@@ -98,7 +113,7 @@ type ReflectOptions struct {
 	// that fields can only be set if the struct is reflected by reference.
 	TransparentPointers bool
 	// For structs, will auto-populate pointer fields with their appropriate Go
-	// type. This is only applicalble if TransparentPointers is on.
+	// type. This is only applicable if TransparentPointers is on.
 	AutoPopulate bool
 }
 
