@@ -1,6 +1,8 @@
 package luar
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/yuin/gopher-lua"
@@ -184,5 +186,163 @@ func Test_mapconversion(t *testing.T) {
 
 	if _, ok := e.S["b"]; ok {
 		t.Fatal(`e.S["b"] should not be set`)
+	}
+}
+
+func Test_toreflect(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+
+	tom := StructTestPerson{
+		Name: "Tom",
+	}
+
+	family := StructTestFamily{
+		Father: tom,
+	}
+
+	L.SetGlobal("family", New(L, family))
+	L.SetGlobal("familyPtr", New(L, &family))
+	L.SetGlobal("nilVal", New(L, nil))
+	L.SetGlobal("intVal", New(L, 10))
+
+	// Plain LTable
+	L.DoString(`
+		tbl = {}
+		tbl.Name = "Bob"
+	`)
+
+	// Plain array
+	L.DoString(`
+		arr = {"Jack", "Jimmy"}
+	`)
+
+	testCases := []struct{
+		name string
+		luaExpr string
+		hint reflect.Type
+		expectFail bool
+		expected interface{}
+	} {
+		{
+			"struct",
+			"family.Father",
+			reflect.TypeOf(tom),
+			false,
+			StructTestPerson{Name: "Tom"},
+		}, {
+			"struct to map",
+			"family.Father",
+			reflect.TypeOf(map[string]interface{}{}),
+			// Shouldn't be able to convert struct to map
+			true,
+			nil,
+		}, {
+			"primitive",
+			"intVal",
+			reflect.TypeOf(0),
+			false,
+			10,
+		}, {
+			"primitive conversion",
+			"intVal",
+			reflect.TypeOf(""),
+			false,
+			"10",
+		}, {
+			"primitive incorrect type",
+			"intVal",
+			reflect.TypeOf(true),
+			// Shouldn't be able to convert int to bool
+			true,
+			nil,
+		}, {
+			"primitive field",
+			"family.Father.Name",
+			reflect.TypeOf(""),
+			false,
+			"Tom",
+		}, {
+			"ptr no downcast",
+			"familyPtr",
+			reflect.TypeOf(family),
+			// No automatic cast of ptr to non-ptr
+			true,
+			nil,
+		}, {
+			"ptr downcast",
+			"-familyPtr",
+			reflect.TypeOf(family),
+			false,
+			StructTestFamily{Father: StructTestPerson{Name: "Tom"}},
+		}, {
+			"ptr",
+			"familyPtr",
+			reflect.TypeOf(&family),
+			false,
+			&StructTestFamily{Father: StructTestPerson{Name: "Tom"}},
+		}, {
+			"nil ptr",
+			"nilVal",
+			reflect.TypeOf(&family),
+			// Should succeed and return a nil ptr
+			false,
+			(*StructTestFamily)(nil),
+		}, {
+			"primitive to struct",
+			"intVal",
+			reflect.TypeOf(&family),
+			// Can't convert an int to a struct
+			true,
+			nil,
+		}, {
+			"struct incorrect type",
+			"family",
+			reflect.TypeOf(tom),
+			// Can't cast a Family to a Person
+			true,
+			nil,
+		}, {
+			"LTable to struct",
+			"tbl",
+			reflect.TypeOf(tom),
+			false,
+			StructTestPerson{Name: "Bob"},
+		}, {
+			"LTable to map",
+			"tbl",
+			reflect.TypeOf(map[string]interface{}{}),
+			false,
+			map[string]interface{}{"Name": "Bob"},
+		}, {
+			"array to slice",
+			"arr",
+			reflect.TypeOf([]string{}),
+			false,
+			[]string{"Jack", "Jimmy"},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			L.DoString(fmt.Sprintf("output = %s", tt.luaExpr))
+
+			lVal := L.GetGlobal("output")
+			val, ok := ToReflect(L, lVal, tt.hint)
+
+			if tt.expectFail {
+				if ok {
+					t.Error("expected reflect fail")
+				}
+				return
+			}
+
+			if !ok {
+				t.Fatal("expected reflect success")
+			}
+			if !reflect.DeepEqual(val.Interface(), tt.expected) {
+				t.Errorf("expected %+v, got %+v", tt.expected, val.Interface())
+			}
+		})
 	}
 }
