@@ -1,10 +1,10 @@
 package luar
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/yuin/gopher-lua"
-	"fmt"
 )
 
 func structIndex(L *lua.LState) int {
