@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/yuin/gopher-lua"
+	"fmt"
 )
 
 func structIndex(L *lua.LState) int {
@@ -104,6 +105,12 @@ func structNewIndex(L *lua.LState) int {
 		if field.Type().Kind() == reflect.Ptr {
 			hint := field.Type().Elem()
 			goValue := lValueToReflect(L, value, hint, nil)
+
+			if !goValue.IsValid() {
+				// Occurs if the assigned value does not match the expected
+				// type for the field
+				L.RaiseError(fmt.Sprintf("could not set field %s: expected type %v", key, hint))
+			}
 
 			if !field.CanSet() {
 				// Can happen if the field is on a struct reflected by

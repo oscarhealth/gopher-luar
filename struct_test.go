@@ -517,6 +517,21 @@ func Test_struct_transparentptr_assign(t *testing.T) {
 	testReturn(t, L, `return b.Str`, "assigned ptr value")
 }
 
+func Test_struct_transparentptr_assigninvalidtype(t *testing.T) {
+	// Assign an invalid type to a given field - should return
+	// a meaningful error
+	L := lua.NewState()
+	defer L.Close()
+
+	b1 := &TestTransparentPtrAccessB{}
+	b2 := &TestTransparentPtrAccessB{}
+
+	L.SetGlobal("b1", New(L, b1, ReflectOptions{TransparentPointers: true}))
+	L.SetGlobal("b2", New(L, b2, ReflectOptions{TransparentPointers: true}))
+
+	testError(t, L, `b1.Str = b2`, "could not set field Str: expected type string")
+}
+
 func Test_struct_transparentptr_nonptrvar(t *testing.T) {
 	// Attempt to access a nil pointer field on a transparent pointer
 	// struct that was reflected by value. Since we can't actually set
