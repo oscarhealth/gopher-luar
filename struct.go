@@ -1,7 +1,6 @@
 package luar
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/yuin/gopher-lua"
@@ -109,7 +108,7 @@ func structNewIndex(L *lua.LState) int {
 			if !goValue.IsValid() {
 				// Occurs if the assigned value does not match the expected
 				// type for the field
-				L.RaiseError(fmt.Sprintf("could not set field %s: expected type %v", key, hint))
+				L.RaiseError("could not set field %s: could not convert value to %v", key, hint)
 			}
 
 			if !field.CanSet() {

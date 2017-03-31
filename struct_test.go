@@ -529,7 +529,7 @@ func Test_struct_transparentptr_assigninvalidtype(t *testing.T) {
 	L.SetGlobal("b1", New(L, b1, ReflectOptions{TransparentPointers: true}))
 	L.SetGlobal("b2", New(L, b2, ReflectOptions{TransparentPointers: true}))
 
-	testError(t, L, `b1.Str = b2`, "could not set field Str: expected type string")
+	testError(t, L, `b1.Str = b2`, "could not set field Str: could not convert value to string")
 }
 
 func Test_struct_transparentptr_nonptrvar(t *testing.T) {
