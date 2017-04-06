@@ -218,6 +218,22 @@ func Test_func_luafunccall(t *testing.T) {
 	}
 }
 
+func Test_func_invalidargtype(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+
+	family := &StructTestFamily{}
+
+	fn := func(p *StructTestPerson) string {
+		return "Hello, " + p.Name
+	}
+
+	L.SetGlobal("family", New(L, family))
+	L.SetGlobal("getHello", New(L, fn))
+
+	testError(t, L, `return getHello(family)`, "invalid type received for arg 1 (expected *luar.StructTestPerson)")
+}
+
 func Test_func_immutable_result(t *testing.T) {
 	// When using reflect options on a function, those options should be applied
 	// to output values from the function. In this case, the output should have
