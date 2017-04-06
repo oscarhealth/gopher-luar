@@ -113,6 +113,9 @@ func funcRegular(L *lua.LState) int {
 			receiver = arg
 		} else {
 			arg = lValueToReflect(L, L.Get(i+1), hint, nil)
+			if !arg.IsValid() {
+				L.RaiseError("invalid type received for arg %d (expected %s)", i+1, hint)
+			}
 		}
 		args[i] = arg
 	}
